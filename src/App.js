@@ -1,24 +1,22 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react';
+import { Container, Typography } from '@mui/material';
+import ImageUploader from './components/ImageUploader';
+import CanvasDisplay from './components/CanvasDisplay';
+import ColorInfoPanel from './components/ColorInfoPanel';
 
 function App() {
+  const [imageSrc, setImageSrc] = useState(null);
+  const [colorData, setColorData] = useState(null);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Container maxWidth="md" style={{ marginTop: '2rem' }}>
+      <Typography variant="h4" gutterBottom>
+        Image Color Picker
+      </Typography>
+      <ImageUploader setImage={setImageSrc} />
+      <CanvasDisplay image={imageSrc} onPickColor={setColorData} />
+      <ColorInfoPanel data={colorData} />
+    </Container>
   );
 }
 
