@@ -1,10 +1,10 @@
 import React from 'react';
 import { Paper, Typography } from '@mui/material';
 
-const ColorInfoPanel = ({ data }) => {
+const ColorInfoPanel = ({ data, originalSize, resizedSize }) => {
   if (!data) return null;
 
-  const { x, y, r, g, b, width, height } = data;
+  const { x, y, r, g, b } = data;
 
   const colorBoxStyle = {
     backgroundColor: `rgb(${r}, ${g}, ${b})`,
@@ -21,9 +21,20 @@ const ColorInfoPanel = ({ data }) => {
         <span style={colorBoxStyle}></span>
         Pixel at ({x}, {y}): RGB({r}, {g}, {b})
       </Typography>
-      <Typography variant="body2" color="text.secondary">
-        Image size: {width} x {height} px
-      </Typography>
+
+      {/* Вывод исходных размеров */}
+      {originalSize && (
+        <Typography variant="body2" color="text.secondary">
+          Исходный размер: {originalSize.width} x {originalSize.height} px
+        </Typography>
+      )}
+
+      {/* Вывод новых размеров, если они есть */}
+      {resizedSize && (
+        <Typography variant="body2" color="text.secondary">
+          Новый размер: {resizedSize.width} x {resizedSize.height} px
+        </Typography>
+      )}
     </Paper>
   );
 };

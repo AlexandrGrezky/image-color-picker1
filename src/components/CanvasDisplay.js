@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-const CanvasDisplay = ({ image, onPickColor }) => {
+const CanvasDisplay = ({ image, onPickColor, scale }) => {
   const canvasRef = useRef(null);
   const imgRef = useRef(new Image());
 
@@ -15,13 +15,27 @@ const CanvasDisplay = ({ image, onPickColor }) => {
     }
 
     img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
+      const padding = 50;
+      const availableWidth = window.innerWidth - padding * 2;
+      const availableHeight = window.innerHeight - padding * 2;
+
+      let drawWidth = img.width * (scale / 100);
+      let drawHeight = img.height * (scale / 100);
+
+      // Ограничиваем размеры, чтобы поместилось на экране
+      const ratio = Math.min(availableWidth / img.width, availableHeight / img.height);
+      drawWidth = img.width * ratio;
+      drawHeight = img.height * ratio;
+
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.drawImage(img, (canvas.width - drawWidth) / 2, (canvas.height - drawHeight) / 2, drawWidth, drawHeight);
     };
 
     img.src = image;
-  }, [image]);
+  }, [image, scale]);
 
   const handleClick = (e) => {
     const canvas = canvasRef.current;
@@ -47,7 +61,7 @@ const CanvasDisplay = ({ image, onPickColor }) => {
     <canvas
       ref={canvasRef}
       onClick={handleClick}
-      style={{ border: '1px solid #ccc', cursor: 'pointer', display: 'block', marginTop: '1rem' }}
+      style={{ border: '1px solid #ccc', cursor: 'pointer', display: 'block', width: '100%', height: '100%' }}
     />
   );
 };
