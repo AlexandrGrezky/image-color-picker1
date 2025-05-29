@@ -1,38 +1,48 @@
 // src/App.js
 import React, { useState } from 'react';
-import { Container, Typography, Box, Button } from '@mui/material';
+import {
+  Container,
+  Typography,
+  Box,
+} from '@mui/material';
 
 import ImageUploader from './components/ImageUploader';
 import CanvasDisplay from './components/CanvasDisplay';
 import ColorInfoPanel from './components/ColorInfoPanel';
+import Toolbar from './components/Toolbar';
 import ResizeImageModal from './components/ResizeImageModal';
 
 function App() {
   const [imageSrc, setImageSrc] = useState(null);
-  const [colorData, setColorData] = useState(null);
   const [scale, setScale] = useState(100);
-  const [originalSize, setOriginalSize] = useState({ width: 0, height: 0, src: null });
-  const [resizedImage, setResizedImage] = useState(null);
+  const [activeTool, setActiveTool] = useState('hand');
+  const [originalSize, setOriginalSize] = useState(null);
+  const [color1, setColor1] = useState(null);
+  const [color2, setColor2] = useState(null);
   const [openModal, setOpenModal] = useState(false);
 
-  const handlePickColor = (data) => {
-    setColorData(data);
+  const handleSelectColor = (pixel, x, y, isSecondary) => {
+    const color = { r: pixel[0], g: pixel[1], b: pixel[2], x, y };
+    if (isSecondary) {
+      setColor2(color);
+    } else {
+      setColor1(color);
+    }
   };
 
-  const handleScaleChange = (e) => {
-    setScale(Number(e.target.value));
+  const handleOpenModal = () => {
+    if (!originalSize) {
+      alert('Сначала загрузите изображение');
+      return;
+    }
+    setOpenModal(true);
   };
 
-  const handleOpenModal = () => setOpenModal(true);
   const handleCloseModal = () => setOpenModal(false);
 
   const handleResizeImage = (canvas) => {
-    const resizedDataURL = canvas.toDataURL();
-    setResizedImage({
-      width: canvas.width,
-      height: canvas.height,
-    });
-    setImageSrc(resizedDataURL);
+    setImageSrc(canvas.toDataURL());
+    setOpenModal(false);
   };
 
   const handleSaveImage = () => {
@@ -44,36 +54,48 @@ function App() {
   };
 
   return (
-    <Container maxWidth="lg" style={{ marginTop: '2rem' }}>
+    <Container maxWidth="lg" sx={{ mt: 4 }}>
       <Typography variant="h4" gutterBottom>
-        Image Editor
+        Image Editor с инструментами
       </Typography>
 
       <ImageUploader setImage={setImageSrc} setOriginalSize={setOriginalSize} />
 
+      <Toolbar activeTool={activeTool} setActiveTool={setActiveTool} />
+
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
-        <Typography>Zoom:</Typography>
+        <Typography>Масштаб:</Typography>
         <input
           type="range"
           min="12"
           max="300"
           value={scale}
-          onChange={handleScaleChange}
+          onChange={(e) => setScale(Number(e.target.value))}
         />
         <Typography>{scale}%</Typography>
       </Box>
 
-      <CanvasDisplay image={imageSrc} onPickColor={handlePickColor} scale={scale} />
-
-      <ColorInfoPanel
-        data={colorData}
-        originalSize={originalSize}
-        resizedSize={resizedImage}
+      <CanvasDisplay
+        image={imageSrc}
+        scale={scale}
+        activeTool={activeTool}
+        onSelectColor={handleSelectColor}
       />
 
+      {(color1 || color2) && (
+        <ColorInfoPanel
+          color1={color1}
+          color2={color2}
+          onClose={() => {
+            setColor1(null);
+            setColor2(null);
+          }}
+        />
+      )}
+
       <Box mt={2}>
-        <Button variant="contained" onClick={handleOpenModal}>Изменить размер</Button>
-        <Button variant="contained" onClick={handleSaveImage} style={{ marginLeft: '1rem' }}>Сохранить</Button>
+        <button onClick={handleOpenModal}>Изменить размер</button>
+        <button onClick={handleSaveImage} style={{ marginLeft: '1rem' }}>Сохранить</button>
       </Box>
 
       <ResizeImageModal

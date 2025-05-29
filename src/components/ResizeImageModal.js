@@ -1,24 +1,32 @@
 // src/components/ResizeImageModal.js
 import React, { useState } from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, TextField, FormControlLabel, Checkbox,
-  Select, MenuItem, InputLabel, FormControl, Tooltip
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  FormControlLabel,
+  Checkbox,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
+  Tooltip,
 } from '@mui/material';
-
-import { dataURLToBlob } from '../utils';
 
 const ResizeImageModal = ({ open, onClose, originalSize, onResize }) => {
   const [unit, setUnit] = useState('pixel');
-  const [width, setWidth] = useState(originalSize.width);
-  const [height, setHeight] = useState(originalSize.height);
+  const [width, setWidth] = useState(originalSize?.width || 100);
+  const [height, setHeight] = useState(originalSize?.height || 100);
   const [keepRatio, setKeepRatio] = useState(true);
   const [interpolation, setInterpolation] = useState('nearest');
 
   const handleChangeWidth = (e) => {
     const newWidth = Number(e.target.value);
     setWidth(newWidth);
-    if (keepRatio) {
+    if (keepRatio && originalSize?.width && originalSize?.height) {
       const ratio = originalSize.height / originalSize.width;
       setHeight(Math.round(newWidth * ratio));
     }
@@ -27,7 +35,7 @@ const ResizeImageModal = ({ open, onClose, originalSize, onResize }) => {
   const handleChangeHeight = (e) => {
     const newHeight = Number(e.target.value);
     setHeight(newHeight);
-    if (keepRatio) {
+    if (keepRatio && originalSize?.width && originalSize?.height) {
       const ratio = originalSize.width / originalSize.height;
       setWidth(Math.round(newHeight * ratio));
     }
@@ -35,18 +43,17 @@ const ResizeImageModal = ({ open, onClose, originalSize, onResize }) => {
 
   const applyResize = () => {
     const img = new Image();
-    img.crossOrigin = "Anonymous";
+    img.crossOrigin = 'Anonymous';
     img.onload = () => {
       const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
-      ctx.imageSmoothingEnabled = false; // nearest neighbor
+      ctx.imageSmoothingEnabled = false;
       ctx.drawImage(img, 0, 0, width, height);
       onResize(canvas);
-      onClose();
     };
-    img.src = originalSize.src;
+    img.src = originalSize?.src || '';
   };
 
   return (

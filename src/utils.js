@@ -6,11 +6,10 @@ export function dataURLToBlob(dataURL) {
   const mimeMatch = arr[0].match(/:(.*?);/);
   const mime = mimeMatch ? mimeMatch[1] : "image/png";
   const bstr = atob(arr[1]);
-  let n = bstr.length;
-  const u8arr = new Uint8Array(n);
+  const u8arr = new Uint8Array(bstr.length);
 
-  while (n--) {
-    u8arr[n] = bstr.charCodeAt(n);
+  for (let i = 0; i < bstr.length; i++) {
+    u8arr[i] = bstr.charCodeAt(i);
   }
 
   return new Blob([u8arr], { type: mime });

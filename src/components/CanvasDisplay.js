@@ -1,9 +1,19 @@
 // src/components/CanvasDisplay.js
-import React, { useEffect, useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
+import { Box } from '@mui/material';
 
-const CanvasDisplay = ({ image, onPickColor, scale = 100 }) => {
+const CanvasDisplay = ({
+  image,
+  scale = 100,
+  activeTool,
+  onSelectColor,
+}) => {
   const canvasRef = useRef(null);
   const imgRef = useRef(new Image());
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+
+  const scaledWidth = useRef(0);
+  const scaledHeight = useRef(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -19,51 +29,90 @@ const CanvasDisplay = ({ image, onPickColor, scale = 100 }) => {
     const availableWidth = window.innerWidth - padding * 2;
     const availableHeight = window.innerHeight - padding * 2;
 
-    img.crossOrigin = "Anonymous";
+    img.crossOrigin = 'Anonymous';
     img.onload = () => {
       const ratio = Math.min(availableWidth / img.width, availableHeight / img.height);
-      const drawWidth = img.width * ratio * (scale / 100);
-      const drawHeight = img.height * ratio * (scale / 100);
+      scaledWidth.current = img.width * ratio * (scale / 100);
+      scaledHeight.current = img.height * ratio * (scale / 100);
 
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, (canvas.width - drawWidth) / 2, (canvas.height - drawHeight) / 2, drawWidth, drawHeight);
-    };
-
-    img.onerror = () => {
-      console.error("Ошибка при загрузке изображения на canvas");
+      ctx.drawImage(
+        img,
+        (canvas.width - scaledWidth.current) / 2 + panOffset.x,
+        (canvas.height - scaledHeight.current) / 2 + panOffset.y,
+        scaledWidth.current,
+        scaledHeight.current
+      );
     };
 
     img.src = image;
-  }, [image, scale]);
+  }, [image, scale, panOffset]);
+
+  const onMouseDown = (e) => {
+    if (activeTool !== 'hand') return;
+
+    let startX = e.clientX;
+    let startY = e.clientY;
+
+    const onMouseMove = (moveEvent) => {
+      const dx = moveEvent.clientX - startX;
+      const dy = moveEvent.clientY - startY;
+      setPanOffset((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+      startX = moveEvent.clientX;
+      startY = moveEvent.clientY;
+    };
+
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
 
   const handleClick = (e) => {
+    if (activeTool !== 'pipette') return;
+
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
-    const x = Math.floor(e.clientX - rect.left);
-    const y = Math.floor(e.clientY - rect.top);
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
-    const ctx = canvas.getContext('2d');
-    const pixel = ctx.getImageData(x, y, 1, 1).data;
+    const imgX =
+      (x - (canvas.width - scaledWidth.current) / 2 - panOffset.x) /
+      (scaledWidth.current / imgRef.current.width);
 
-    onPickColor({
-      x,
-      y,
-      r: pixel[0],
-      g: pixel[1],
-      b: pixel[2],
-      width: canvas.width,
-      height: canvas.height,
-    });
+    const imgY =
+      (y - (canvas.height - scaledHeight.current) / 2 - panOffset.y) /
+      (scaledHeight.current / imgRef.current.height);
+
+    if (imgX >= 0 && imgY >= 0 && imgX < imgRef.current.width && imgY < imgRef.current.height) {
+      const ctx = canvas.getContext('2d');
+      const pixel = ctx.getImageData(x, y, 1, 1).data;
+      onSelectColor(pixel, imgX, imgY, e.altKey || e.ctrlKey || e.shiftKey);
+    }
   };
 
   return (
-    <canvas
-      ref={canvasRef}
-      onClick={handleClick}
-      style={{ border: '1px solid #ccc', cursor: 'pointer', display: 'block', marginTop: '1rem' }}
-    />
+    <Box
+      sx={{
+        position: 'relative',
+        overflow: 'auto',
+        border: '1px solid #ccc',
+        width: '100%',
+        height: '600px',
+      }}
+    >
+      <canvas
+        ref={canvasRef}
+        onClick={handleClick}
+        onMouseDown={onMouseDown}
+        style={{ cursor: activeTool === 'hand' ? 'grab' : 'crosshair' }}
+      />
+    </Box>
   );
 };
 
