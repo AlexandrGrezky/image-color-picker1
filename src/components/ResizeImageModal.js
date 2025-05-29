@@ -1,18 +1,19 @@
-import React, { useState, useRef } from 'react';
+// src/components/ResizeImageModal.js
+import React, { useState } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, FormControlLabel, Checkbox,
   Select, MenuItem, InputLabel, FormControl, Tooltip
 } from '@mui/material';
 
+import { dataURLToBlob } from '../utils';
+
 const ResizeImageModal = ({ open, onClose, originalSize, onResize }) => {
-  const [unit, setUnit] = useState('percent');
+  const [unit, setUnit] = useState('pixel');
   const [width, setWidth] = useState(originalSize.width);
   const [height, setHeight] = useState(originalSize.height);
   const [keepRatio, setKeepRatio] = useState(true);
   const [interpolation, setInterpolation] = useState('nearest');
-
-  const canvasRef = useRef(document.createElement('canvas'));
 
   const handleChangeWidth = (e) => {
     const newWidth = Number(e.target.value);
@@ -34,9 +35,9 @@ const ResizeImageModal = ({ open, onClose, originalSize, onResize }) => {
 
   const applyResize = () => {
     const img = new Image();
-    img.src = URL.createObjectURL(dataURLToBlob(originalSize.src)); // предположим, что src есть
+    img.crossOrigin = "Anonymous";
     img.onload = () => {
-      const canvas = canvasRef.current;
+      const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
@@ -45,17 +46,8 @@ const ResizeImageModal = ({ open, onClose, originalSize, onResize }) => {
       onResize(canvas);
       onClose();
     };
+    img.src = originalSize.src;
   };
-
-  function dataURLToBlob(dataURL) {
-    const arr = dataURL.split(',');
-    const mime = arr[0].match(/:(.*?);/)[1];
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) u8arr[n] = bstr.charCodeAt(n);
-    return new Blob([u8arr], { type: mime });
-  }
 
   return (
     <Dialog open={open} onClose={onClose}>
@@ -70,22 +62,23 @@ const ResizeImageModal = ({ open, onClose, originalSize, onResize }) => {
         </FormControl>
 
         <TextField
-            label="Ширина"
-            type="number"
-            fullWidth
-            margin="dense"
-            value={width}
-            onChange={handleChangeWidth}  // <-- теперь используем handleChangeWidth
+          label="Ширина"
+          type="number"
+          fullWidth
+          margin="dense"
+          value={width}
+          onChange={handleChangeWidth}
         />
 
         <TextField
-            label="Высота"
-            type="number"
-            fullWidth
-            margin="dense"
-            value={height}
-            onChange={handleChangeHeight}  // <-- теперь используем handleChangeHeight
+          label="Высота"
+          type="number"
+          fullWidth
+          margin="dense"
+          value={height}
+          onChange={handleChangeHeight}
         />
+
         <FormControlLabel
           control={<Checkbox checked={keepRatio} onChange={(e) => setKeepRatio(e.target.checked)} />}
           label="Сохранять пропорции"
